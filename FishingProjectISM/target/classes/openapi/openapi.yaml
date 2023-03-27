@@ -1,0 +1,518 @@
+openapi: 3.0.0
+
+info:
+  title: Fishing API
+  description : Fishing Project API by Gunce Demirel Ozer
+  version: 1.0.0
+servers:
+  - url: https://example.org/api/v3
+paths:
+  /user:
+    post: 
+      tags:
+        - user
+      summary: Create user
+      description: This can only be done by the logged in user.
+      operationId: createUser
+      responses:
+        default:
+          description: succesful operation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserData'
+        description: Created user object
+        required: true
+  /user/login:
+    get:
+      tags:
+        - user
+      summary: Logs user into the system
+      operationId: loginUser
+      parameters: 
+        - name: username
+          in: query
+          description: The user name for login
+          required: true
+          schema: 
+            type: string
+        - name: password
+          in: query
+          description: The password for login in clear text
+          required: true
+          schema: 
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/json:
+              schema:
+                type: string
+            application/xml:
+              schema:
+                type: string
+        '400':
+          description: Invalid username/password supplied
+  
+  /user/logout:
+    get:
+      tags:
+        - user
+      summary: Logs out current logged in user session
+      operationId: logoutUser
+      responses:
+        default:
+          description: successful operation
+  '/user/{username}':
+    get:
+      tags:
+        - user
+      summary: Get user by user name
+      operationId: getUserByName
+      parameters:
+        - name: username
+          in: path
+          description: The name that needs to be fetched. Use user1 for testing.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/UserData'
+        '400':
+          description: Invalid username supplied
+        '404':
+          description: User not found
+    put:
+      tags:
+        - user
+      summary: Updated user
+      description: This can only be done by the logged in user.
+      operationId: updateUser
+      parameters:
+        - name: username
+          in: path
+          description: name that need to be updated
+          required: true
+          schema:
+            type: string
+      responses:
+        '400':
+          description: Invalid user supplied
+        '404':
+          description: User not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserData'
+        description: Updated user object
+        required: true
+        
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      parameters:
+        - name: username
+          in: path
+          description: The name that needs to be deleted
+          required: true
+          schema:
+            type: string
+      responses:
+        '400':
+          description: Invalid username supplied
+        '404':
+          description: User not found
+
+
+  /fishingData:
+    put:
+      tags:
+        - fishingData
+      summary: Update an existing fish
+      description: Update by Id
+      operationId: updateFishingData
+      requestBody:
+        content: 
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FishingData'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/FishingData'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FishingData'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FishingData'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/FishingData'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Fishing data not found
+        '405':
+          description: Validation exception
+      security:
+        - fishingPortal_auth:
+            - write:fishingData
+            - read:fishingData
+    post:
+      tags:
+        - fishingData
+      summary: Add a new fishing data
+      operationId: addFishingData
+      requestBody:
+        description: Create a new fishing data
+        content: 
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FishingData'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FishingData'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FishingData'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/FishingData'
+        '405':
+          description: Invalid input
+      security:
+        - fishingPortal_auth:
+            - write:fishingData
+            - read:fishingData
+            
+  /fishinData/findBySpecies:
+    get:
+      tags:
+        - fishingData
+      summary: find fishing data by species
+      operationId: findBySpecies
+      parameters:
+        - name: species
+          in: query
+          description: Spacies names that need to be considered for filter
+          required: false
+          explode: true
+          schema:
+            type: string
+        - name: offset
+          in: query
+          schema:
+            type: integer
+          description: The number of items to skip before starting to collect the result set
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          description: The numbers of items to return
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FishingDataRecords'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/FishingDataRecords'
+        '400':
+          description: Invalid status value
+      security:
+        - fishingPortal_auth:
+            - write:gData
+            - read:fishingData
+  /fishingData/{fishingDataId}:
+    get:
+      tags:
+        - fishingData
+      summary: Find fishing data by Id
+      description: Returns a single record of data
+      operationId: getFishingDataById
+      parameters:
+        - name: fishingDataId
+          in: path
+          description: ID of fishing data record to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FishingData'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/FishingData'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: FishingData not found
+      security:
+        - fishingPortal_auth:
+            - write:fishingData
+            - read:fishingData
+    post:
+      tags:
+        - fishingData
+      summary: Updates a fishing data with form data
+      operationId: updateFishingDataWithForm
+      parameters:
+        - name: fishingDataId
+          in: path
+          description: ID of fishing data record that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: genus
+          in: query
+          description: Name of genus of fish in fishing data record that needs to be updated
+          schema:
+            type: string
+        - name: length
+          in: query
+          description: Lenght of fish in fishing data record that needs to be updated
+          schema:
+            type: string
+      responses:
+        '405':
+          description: Invalid input
+      security:
+        - fishingPortal_auth:
+            - write:fishingData
+            - read:fishingData
+    delete:
+      tags:
+        - fishingData
+      summary: Deletes a fishing data record
+      description: delete a fishing data record
+      operationId: deleteFishingData
+      parameters:
+        - name: api_key
+          in: header
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: fishingDataId
+          in: path
+          description: id of fishing data record to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Invalid fishing record id value
+      security:
+        - fishingPortal_auth:
+            - write:fishingData
+            - read:fishingData
+  /fishingSpots/{name}:
+    get:
+      tags:
+        - fishingSpots
+      summary: Find fishing spots by name
+      operationId: getFishingSpotsByName
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FishingSpots'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/FishingSpots'
+        '400':
+          description: Invalid name supplied
+        '404':
+          description: FishingSpots not found
+      security:
+        - fishingPortal_auth:
+            - write:fishingSpots
+            - read:fishingSpots
+          
+          
+          
+components:
+  schemas:
+    UserData:
+      required:
+        - id 
+        - username
+        - firstName
+        - lastName
+        - email
+        - password
+        - favoriteFishingSpots
+      type: object
+      properties:
+        id: 
+          type: integer
+          format: int64
+          example: 15
+        username:
+          type: string
+          example: gunceOzer
+        firstName: 
+          type: string
+          example: 'Gunce'
+        lastName:
+          type: string
+          example: 'Ozer'
+        email:
+          type: string
+          example: 'blabla@gmail.com'
+        password:
+          type: string
+          example: '12345'
+        favoriteFishingSpots:
+          type: string
+          example: 'Olesnica'
+      xml:
+        name: userData
+    FishingSpots:
+      required:
+        - id
+        - name
+        - longtitude
+        - altitude
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 3
+        name: 
+          type: string
+          example: 'Olesnica'
+        longtitude:
+          type: number
+          format: float
+        altitude:
+          type: number
+          format: float
+      xml:
+        name: fishingSpots
+          
+    FishingData:
+      required:
+        - id
+        - genus
+        - longtitude
+        - altitude
+        - length
+        - weight
+        - fishingSpot
+      type: object
+      properties:
+        id: 
+          type: integer
+          format: int64
+          example: 15
+        genus:
+          type: string
+          example: 'Cyprinus'
+        longtitude:
+           type: number
+           format: float
+        altitude:
+          type: number
+          format: float
+        length:
+           type: integer
+           format: int64
+        weight:
+          type: integer
+          format: int64
+        fishingSpot:
+          type: string
+      xml:
+        name: fishingData
+    FishingDataRecords:
+      type: array
+      items:
+        $ref: '#/components/schemas/FishingData'
+      xml:
+        name: fishingDataRecords
+        wrapped: true
+  requestBodies:
+    FishingData:
+      description: Pet object that needs to be added to the store
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FishingData'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/FishingData'
+            
+  securitySchemes:
+    fishingPortal_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://example.org/oauth/authorize
+          scopes:
+            write:fishingData: modify fishing data in your account
+            read:fishingData: read fishing data
+        
+ 
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+  

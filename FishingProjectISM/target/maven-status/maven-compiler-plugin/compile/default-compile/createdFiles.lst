@@ -1,0 +1,8 @@
+com/example/api/ApiUtil.class
+com/example/api/UserApi.class
+com/example/model/FishingSpots.class
+com/example/model/UserData.class
+com/example/api/FishingSpotsApi.class
+com/example/fishingprojectism/FishingProjectIsmApplication.class
+com/example/api/FishingDataApi.class
+com/example/model/FishingData.class
